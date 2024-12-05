@@ -1,0 +1,43 @@
+<!-- 顔認証ページ -->
+<button id="startCamera">顔認証を開始する</button>
+<video id="video" width="320" height="240" autoplay></video>
+<canvas id="canvas" width="320" height="240" style="display:none"></canvas>
+
+<script>
+    // 顔認証開始ボタン
+    document.getElementById('startCamera').addEventListener('click', function() {
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(stream) {
+                document.getElementById('video').srcObject = stream;
+            })
+            .catch(function(error) {
+                console.log('カメラの取得に失敗しました。', error);
+            });
+    });
+
+    // 顔画像をキャプチャ
+    function captureImage() {
+        const canvas = document.getElementById('canvas');
+        const video = document.getElementById('video');
+        canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+        const imageData = canvas.toDataURL('image/jpeg');
+
+        // サーバーに顔画像を送信（顔認証処理）
+        fetch('/face_recognition.php', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ image: imageData })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('顔認証成功！チケットを購入できます');
+                // 顔認証が成功した場合、チケット購入画面へ遷移
+            } else {
+                alert('顔認証に失敗しました');
+            }
+        });
+    }
+</script>
